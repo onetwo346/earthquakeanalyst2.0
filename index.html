@@ -12,52 +12,56 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(180deg, #0d1b2a, #1b263b, #415a77); /* Cosmic gradient */
-            font-family: 'Orbitron', sans-serif; /* Futuristic font */
+            background: linear-gradient(135deg, #1a1a3d, #2a4066); /* Subtle cosmic gradient */
+            font-family: 'Exo 2', sans-serif; /* Cleaner futuristic font */
             overflow: hidden;
         }
 
         .intro-container {
             text-align: center;
-            color: #e0e1dd;
-            text-shadow: 0 0 10px #00d4ff;
+            color: #d9e4ff;
             animation: fadeIn 2s ease-in-out;
         }
 
         h1 {
-            font-size: 3em;
+            font-size: 3.5em;
             margin-bottom: 20px;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, #00c6ff, #ff5e62);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         p {
-            font-size: 1.2em;
-            max-width: 600px;
+            font-size: 1.3em;
+            max-width: 700px;
             margin: 0 auto 40px;
-            line-height: 1.5;
+            line-height: 1.6;
+            color: #b3c7ff;
         }
 
         .start-button {
             padding: 15px 40px;
             font-size: 1.5em;
             color: #fff;
-            background: linear-gradient(45deg, #00d4ff, #ff00ff);
+            background: linear-gradient(45deg, #00c6ff, #ff5e62);
             border: none;
-            border-radius: 25px;
+            border-radius: 30px;
             cursor: pointer;
-            box-shadow: 0 0 20px #00d4ff, 0 0 40px #ff00ff;
-            animation: pulse 1.5s infinite;
-            transition: transform 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 198, 255, 0.5);
+            animation: pulse 1.8s infinite;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .start-button:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(255, 94, 98, 0.7);
         }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 20px #00d4ff, 0 0 40px #ff00ff; }
-            50% { box-shadow: 0 0 30px #00d4ff, 0 0 60px #ff00ff; }
-            100% { box-shadow: 0 0 20px #00d4ff, 0 0 40px #ff00ff; }
+            0% { box-shadow: 0 5px 15px rgba(0, 198, 255, 0.5); }
+            50% { box-shadow: 0 5px 25px rgba(0, 198, 255, 0.8); }
+            100% { box-shadow: 0 5px 15px rgba(0, 198, 255, 0.5); }
         }
 
         @keyframes fadeIn {
@@ -65,7 +69,6 @@
             to { opacity: 1; }
         }
 
-        /* Starfield background */
         .stars {
             position: absolute;
             top: 0;
@@ -73,23 +76,22 @@
             width: 100%;
             height: 100%;
             background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="white"/></svg>') repeat;
-            opacity: 0.3;
-            animation: twinkle 5s infinite;
+            opacity: 0.2;
+            animation: twinkle 6s infinite;
         }
 
         @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.4; }
         }
     </style>
-    <!-- Futuristic font from Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="stars"></div>
     <div class="intro-container">
         <h1>Earthquake Analyst</h1>
-        <p>Step into the future of seismic monitoring. Explore real-time earthquake data, visualize cosmic patterns on an interactive map, and receive AI-driven insights—all wrapped in a stellar interface. Tap to begin your journey.</p>
+        <p>Welcome to a next-gen seismic experience. Monitor real-time earthquake data, uncover cosmic patterns, and get AI-driven insights—all in a sleek, futuristic interface. Tap to launch your exploration.</p>
         <button class="start-button" onclick="window.location.href='main.html'">Tap to Start</button>
     </div>
 </body>
