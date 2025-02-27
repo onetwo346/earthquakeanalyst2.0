@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Earthquake Analyst</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/jsLKmRVo5Y8L8O+1o=" crossorigin=""/>
+    <style>
+        /* Your existing CSS styles */
+    </style>
+</head>
+<body>
+    <img src="0.jpg" id="logo" alt="Earthquake Analyst Logo">
+    <h1>Earthquake Analyst</h1>
+    <p>Real-time seismic data, maps, and AI insights at your fingertips.</p>
+
+    <div id="controls">
+        <button onclick="fetchData()">Fetch Data</button>
+        <button onclick="viewRegularEarthquakes()">Regular Quakes</button>
+        <button onclick="viewDangerousEarthquakes()">Dangerous Quakes</button>
+        <button onclick="viewStats()">View Stats</button>
+        <button onclick="toggleMap()">View Map</button>
+    </div>
+
+    <div id="earthquakeData">No data available yet. Tap "Fetch Data" to start.</div>
+    <div id="earthquakeMap"></div>
+    <div id="statsView" style="display: none;">
+        <h2>Earthquake Stats</h2>
+        <input type="date" id="statsDatePicker" onchange="updateStats()">
+        <div id="statsContent">No data recorded yet.</div>
+    </div>
+    <div id="aiFeedback">
+        <h2>AI Insights</h2>
+    </div>
+
+    <footer>
+        <p>Design by Kofi Fosu</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        let earthquakeData = [];
+        let dangerousEarthquakes = [];
+        let stats = JSON.parse(localStorage.getItem('earthquakeStats')) || {};
+        let currentMapData = [];
+        const aiInsights = [
+            {
+                prediction: "Severe shaking detected. High alert.",
+                riskAssessment: ["Major structural risks.", "Aftershocks likely.", "Infrastructure disruption possible."],
+                safetyMeasures: ["Take cover under solid structures.", "Avoid windows and tall objects.", "Prepare for aftershocks."]
+            },
+            {
+                prediction: "Moderate activity observed.",
+                riskAssessment: ["Minor damage potential.", "Short-term aftershocks possible."],
+                safetyMeasures: ["Secure loose items.", "Check building stability.", "Monitor updates."]
+            },
+            {
+                prediction: "Low-level tremors.",
+                riskAssessment: ["Minimal risk detected.", "Brief activity expected."],
+                safetyMeasures: ["Stay cautious.", "Secure small objects.", "Remain indoors if possible."]
+            }
+        ];
+
+        const map = L.map('earthquakeMap', {
+            zoomControl: true,
+            doubleClickZoom: false,
+            scrollWheelZoom: true
+        }).setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors',
+            tileSize: 512,
+            zoomOffset: -1
+        }).addTo(map);
+
+        function fetchData() {
+            fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson")
+                .then(response => {
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    return response.json();
+                })
+                .then(data => {
+                    earthquakeData = data.features;
+                    processEarthquakeData();
+                    currentMapData = earthquakeData;
+                    if (document.getElementById("earthquakeMap").style.display === "block") updateMap();
+                    generateAIAnalysis();
+                    storeDataForStats();
+                })
+                .catch(error => {
+                    document.getElementById("earthquakeData").innerHTML = `Error: ${error.message}`;
+                    console.error("Fetch error:", error);
+                });
+        }
+
+        function processEarthquakeData() {
+            const container = document.getElementById("earthquakeData");
+            container.innerHTML = `<h2>Seismic Feed (Updated: ${new Date().toLocaleString()})</h2>`;
+            earthquakeData.forEach(quake => {
+                const { place, mag, time } = quake.properties;
+                const date = new Date(time).toLocaleString();
+                container.innerHTML += `
+                    <div>
+                        <strong>Location:</strong> ${place}<br>
+                        <strong>Magnitude:</strong> ${mag.toFixed(1)}<br>
+                        <strong>Time:</strong> ${date}<hr>
+                    </div>`;
+            });
+        }
+
+        function storeDataForStats() {
+            const currentDate = new Date().toLocaleDateString("en-US", { timeZone: "UTC" });
+            stats[currentDate] = earthquakeData;
+            localStorage.setItem('earthquakeStats', JSON.stringify(stats));
+        }
+
+        function viewRegularEarthquakes() {
+            if (earthquakeData.length) {
+                processEarthquakeData();
+                currentMapData = earthquakeData;
+                if (document.getElementById("earthquakeMap").style.display === "block") updateMap();
+            } else {
+                document.getElementById("earthquakeData").innerHTML = "<h2>Regular Quakes</h2><p>No data yet. Tap 'Fetch Data' to load.</p>";
+            }
+            document.getElementById("statsView").style.display = "none";
+        }
+
+        function viewDangerousEarthquakes() {
+            const container = document.getElementById("earthquakeData");
+            container.innerHTML = "<h2>High-Impact Quakes (Mag ≥ 4.0)</h2>";
+            if (earthquakeData.length) {
+                dangerousEarthquakes = earthquakeData.filter(e => e.properties.mag >= 4.0);
+                if (dangerousEarthquakes.length) {
+                    dangerousEarthquakes.forEach(quake => {
+                        const { place, mag, time } = quake.properties;
+                        const date = new Date(time).toLocaleString();
+                        container.innerHTML += `
+                            <div class="dangerous">
+                                <strong>Location:</strong> ${place}<br>
+                                <strong>Magnitude:</strong> ${mag.toFixed(1)}<br>
+                                <strong>Time:</strong> ${date}<hr>
+                            </div>`;
+                    });
+                    currentMapData = dangerousEarthquakes;
+                    if (document.getElementById("earthquakeMap").style.display === "block") updateMap();
+                } else {
+                    container.innerHTML += "<p>No high-impact quakes found.</p>";
+                    currentMapData = [];
+                    if (document.getElementById("earthquakeMap").style.display === "block") updateMap();
+                }
+            } else {
+                container.innerHTML += "<p>No data yet. Tap 'Fetch Data' to load.</p>";
+            }
+            document.getElementById("statsView").style.display = "none";
+        }
+
+        function viewStats() {
+            const statsView = document.getElementById("statsView");
+            if (statsView.style.display === "block") {
+                statsView.style.display = "none";
+            } else {
+                statsView.style.display = "block";
+                const datePicker = document.getElementById("statsDatePicker");
+                datePicker.value = new Date().toISOString().split("T")[0];
+                updateStats();
+            }
+        }
+
+        function updateStats() {
+            const statsContent = document.getElementById("statsContent");
+            const selectedDate = new Date(document.getElementById("statsDatePicker").value)
+                .toLocaleDateString("en-US", { timeZone: "UTC" });
+            statsContent.innerHTML = `<h3>Stats for ${selectedDate}</h3>`;
+            if (stats[selectedDate] && stats[selectedDate].length) {
+                statsContent.innerHTML += `<p><strong>Total Quakes:</strong> ${stats[selectedDate].length}</p>`;
+                stats[selectedDate].forEach(quake => {
+                    const { place, mag, time } = quake.properties;
+                    const date = new Date(time).toLocaleString();
+                    statsContent.innerHTML += `
+                        <div>
+                            <strong>Location:</strong> ${place}<br>
+                            <strong>Magnitude:</strong> ${mag.toFixed(1)}<br>
+                            <strong>Time:</strong> ${date}
+                        </div>`;
+                });
+            } else {
+                statsContent.innerHTML += "<p>No data for this date. Tap 'Fetch Data' to load.</p>";
+            }
+        }
+
+        function generateAIAnalysis() {
+            const aiSection = document.getElementById("aiFeedback");
+            aiSection.style.display = "block";
+            let currentIndex = 0;
+            function updateAIInsight() {
+                const insight = aiInsights[currentIndex];
+                aiSection.innerHTML = `
+                    <h2>AI Insights</h2>
+                    <div class="ai-prediction">${insight.prediction}</div>
+                    <div class="risk-assessment"><strong>Risk Assessment:</strong><br>${insight.riskAssessment.join("<br>")}</div>
+                    <div class="safety-measures"><strong>Safety Measures:</strong><br>${insight.safetyMeasures.join("<br>")}</div>
+                `;
+                currentIndex = (currentIndex + 1) % aiInsights.length;
+            }
+            updateAIInsight();
+            clearInterval(window.aiCycleInterval);
+            window.aiCycleInterval = setInterval(updateAIInsight, 5000);
+        }
+
+        function updateMap() {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) map.removeLayer(layer);
+            });
+            if (currentMapData.length) {
+                const markers = currentMapData.map(quake => {
+                    const coords = quake.geometry.coordinates; // [lon, lat, depth]
+                    const { place, mag } = quake.properties;
+                    const markerSize = Math.max(10, mag * 5);
+                    const marker = L.marker([coords[1], coords[0]], {
+                        title: `${place} (Mag: ${mag.toFixed(1)})`
+                    }).addTo(map);
+                    marker.bindPopup(`<b>${place}</b><br>Magnitude: ${mag.toFixed(1)}<br>Coords: ${coords[1].toFixed(4)}°N, ${coords[0].toFixed(4)}°E`);
+                    marker.setIcon(L.divIcon({
+                        className: 'earthquake-marker',
+                        html: `<div style="background: linear-gradient(45deg, #ff5e62, #00c6ff); width: ${markerSize}px; height: ${markerSize}px; border-radius: 50%; opacity: 0.8; border: 2px solid #fff;"></div>`,
+                        iconSize: [markerSize, markerSize]
+                    }));
+                    return marker;
+                });
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+                map.invalidateSize();
+                markers[0]?.openPopup();
+            } else {
+                map.setView([0, 0], 2);
+                document.getElementById("earthquakeMap").innerHTML = '<p style="text-align: center; padding: 10px;">No quakes to display. Tap "Fetch Data" to load.</p>';
+            }
+        }
+
+        function toggleMap() {
+            const mapDiv = document.getElementById("earthquakeMap");
+            if (mapDiv.style.display === "block") {
+                mapDiv.style.display = "none";
+            } else {
+                mapDiv.style.display = "block";
+                updateMap();
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (document.getElementById("earthquakeMap").style.display === "block") map.invalidateSize();
+        });
+    </script>
+</body>
+</html>
